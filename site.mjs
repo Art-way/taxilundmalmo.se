@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { airports, cities, guides, prices } from './content.mjs';
 
 const paths = new Map();
@@ -28,22 +29,23 @@ const icons = {
 };
 
 const icon = (name, size = 20) => `<svg aria-hidden="true" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
-const wordmark = `<a href="/" class="brand" aria-label="Taxi Syd, startsida"><span class="brand-mark" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M6 17 17 6M9 6h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="5.5" cy="17.5" r="1.5" fill="currentColor"/></svg></span><span>taxi<span class="brand-syd">syd.</span></span></a>`;
+const logo = readFileSync(new URL('./public/taxi-syd-logo.svg', import.meta.url), 'utf8').replace('<svg ', '<svg aria-hidden="true" ');
+const wordmark = (active = false) => `<a href="/" class="brand" aria-label="Taxi Syd, startsida"${active ? ' aria-current="page"' : ''}>${logo}</a>`;
 const eyebrow = (label, mark = false) => `<p class="eyebrow">${mark ? '<span class="status-dot"></span>' : ''}${label}</p>`;
 const link = (href, label, variant = 'primary', arrow = 'arrow') => `<a href="${href}" class="button button-${variant}">${label}${icon(arrow, 17)}</a>`;
 const textLink = (href, label) => `<a href="${href}" class="text-link">${label}${icon('arrow', 18)}</a>`;
 const navItem = (href, label, path) => `<a href="${href}"${path.startsWith(href) ? ' aria-current="location"' : ''}>${label}</a>`;
 
 function header(path) {
-  return `<header class="site-header"><div class="nav-shell">${wordmark}<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">${icon('menu')}<span>Meny</span></button><nav id="main-nav" class="main-nav" aria-label="Huvudmeny">${navItem('/lund/', 'Lund', path)}${navItem('/malmo/', 'Malmö', path)}${navItem('/flygtaxi/', 'Flygtaxi', path)}${navItem('/priser/', 'Priser', path)}${navItem('/kontakt/', 'Kontakt', path)}</nav>${link('/boka-taxi/', 'Boka taxi', 'nav', 'upRight')}</div></header>`;
+  return `<header class="site-header"><div class="nav-shell">${wordmark(path === '/')}<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav">${icon('menu')}<span>Meny</span></button><nav id="main-nav" class="main-nav" aria-label="Huvudmeny">${navItem('/lund/', 'Lund', path)}${navItem('/malmo/', 'Malmö', path)}${navItem('/flygtaxi/', 'Flygtaxi', path)}${navItem('/priser/', 'Priser', path)}${navItem('/kontakt/', 'Kontakt', path)}</nav>${link('/boka-taxi/', 'Boka taxi', 'nav', 'upRight')}</div></header>`;
 }
 
 function footer() {
-  return `<footer class="site-footer"><div class="container"><div class="footer-main"><div>${wordmark}<p>Flygtaxi från Lund och Malmö.<br>Fast pris hela vägen.</p></div><div><p class="eyebrow">RES MED OSS</p><a href="/lund/">Taxi i Lund</a><a href="/malmo/">Taxi i Malmö</a><a href="/flygtaxi/">Flygtaxi</a><a href="/priser/">Priser</a></div><div><p class="eyebrow">INFORMATION</p><a href="/om-oss/">Om Taxi Syd</a><a href="/vanliga-fragor/">Vanliga frågor</a><a href="/guider/">Reseguider</a><a href="/kontakt/">Kontakt</a></div><div class="footer-action">${link('/boka-taxi/', 'Planera din resa', 'light', 'upRight')}</div></div><div class="footer-bottom"><span>Taxi Syd · Lund och Malmö</span><span>Lokal förhandsvisning</span></div></div></footer>`;
+  return `<footer class="site-footer"><div class="container"><div class="footer-main"><div>${wordmark()}<p>Flygtaxi från Lund och Malmö.<br>Fast pris hela vägen.</p></div><div><p class="eyebrow">RES MED OSS</p><a href="/lund/">Taxi i Lund</a><a href="/malmo/">Taxi i Malmö</a><a href="/flygtaxi/">Flygtaxi</a><a href="/priser/">Priser</a></div><div><p class="eyebrow">INFORMATION</p><a href="/om-oss/">Om Taxi Syd</a><a href="/vanliga-fragor/">Vanliga frågor</a><a href="/guider/">Reseguider</a><a href="/kontakt/">Kontakt</a></div><div class="footer-action">${link('/boka-taxi/', 'Planera din resa', 'light', 'upRight')}</div></div><div class="footer-bottom"><span>Taxi Syd · Lund och Malmö</span><span>Lokal förhandsvisning</span></div></div></footer>`;
 }
 
 function shell({ title, description, path, body }) {
-  return `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="${escape(description)}"><meta name="theme-color" content="#f8f8f4"><title>${escape(title)} | Taxi Syd</title><link rel="icon" href="/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script></head><body><a class="skip-link" href="#main">Hoppa till innehållet</a>${header(path)}<main id="main">${body}</main>${footer()}<script id="prices-data" type="application/json">${JSON.stringify(prices)}</script></body></html>`;
+  return `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="${escape(description)}"><meta name="theme-color" content="#faf8f3"><title>${escape(title)} | Taxi Syd</title><link rel="icon" href="/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script></head><body><a class="skip-link" href="#main">Hoppa till innehållet</a>${header(path)}<main id="main">${body}</main>${footer()}<script id="prices-data" type="application/json">${JSON.stringify(prices)}</script></body></html>`;
 }
 
 function selectField(name, label, glyph, items, selected, locked = false) {

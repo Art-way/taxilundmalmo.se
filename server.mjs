@@ -8,6 +8,9 @@ const assets = new Map([
   ['/oresund-taxi.jpg', 'image/jpeg'],
   ['/manrope.woff2', 'font/woff2'],
   ['/manrope-OFL.txt', 'text/plain; charset=utf-8'],
+  ['/familjen-grotesk.woff2', 'font/woff2'],
+  ['/familjen-grotesk-OFL.txt', 'text/plain; charset=utf-8'],
+  ['/taxi-syd-logo.svg', 'image/svg+xml'],
   ['/mark.svg', 'image/svg+xml'],
 ]);
 const host = '127.0.0.1';
