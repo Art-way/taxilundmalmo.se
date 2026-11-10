@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "outputDirectory": "public",
+  "functions": {
+    "api/render.mjs": {
+      "includeFiles": "public/taxi-syd-logo.svg"
+    }
+  },
+  "rewrites": [
+    { "source": "/", "destination": "/api/render?__taxi_path=/" },
+    { "source": "/:path*", "destination": "/api/render?__taxi_path=/:path*" }
+  ]
+}
