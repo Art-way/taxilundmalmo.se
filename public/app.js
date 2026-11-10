@@ -1,6 +1,14 @@
 const prices = JSON.parse(document.querySelector('#prices-data').textContent);
 const formatPrice = new Intl.NumberFormat('sv-SE');
 const menu = document.querySelector('.menu-toggle');
+const routePreview = document.querySelector('[data-route-preview]');
+
+if (routePreview) {
+  const compactLayout = matchMedia('(max-width: 860px)');
+  const updateMapDisclosure = () => { routePreview.open = !compactLayout.matches; };
+  updateMapDisclosure();
+  compactLayout.addEventListener('change', updateMapDisclosure);
+}
 
 menu.addEventListener('click', () => {
   const open = menu.getAttribute('aria-expanded') === 'true';
@@ -112,7 +120,7 @@ if (booking) {
     summary.hidden = false;
     reviewStep.removeAttribute('aria-current');
     detailsStep.setAttribute('aria-current', 'step');
-    (booking.elements.fran.disabled ? booking.elements.till : booking.elements.fran).focus();
+    booking.elements.adress.focus();
   });
   booking.querySelector('button[type="submit"]').disabled = false;
 }

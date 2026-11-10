@@ -44,7 +44,7 @@ function footer() {
 }
 
 function shell({ title, description, path, body }) {
-  return `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="${escape(description)}"><meta name="theme-color" content="#faf8f3"><title>${escape(title)} | Taxi Syd</title><link rel="icon" href="/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script></head><body><a class="skip-link" href="#main">Hoppa till innehållet</a>${header(path)}<main id="main">${body}</main>${footer()}<script id="prices-data" type="application/json">${JSON.stringify(prices)}</script></body></html>`;
+  return `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="description" content="${escape(description)}"><meta name="theme-color" content="#f5f7f2"><title>${escape(title)} | Taxi Syd</title><link rel="icon" href="/mark.svg" type="image/svg+xml"><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script></head><body><a class="skip-link" href="#main">Hoppa till innehållet</a>${header(path)}<main id="main">${body}</main>${footer()}<script id="prices-data" type="application/json">${JSON.stringify(prices)}</script></body></html>`;
 }
 
 function selectField(name, label, glyph, items, selected, locked = false) {
@@ -63,12 +63,12 @@ function quickQuote() {
     <fieldset class="quote-options"><legend>Kör mig till</legend><div class="option-grid">
       ${airportIds.map(id => `<label class="quote-option"><input type="radio" name="till" value="${id}" data-label="${airports[id].name}"${id === 'kastrup' ? ' checked' : ''}><span>${airports[id].name}<small>${airports[id].code}</small></span></label>`).join('')}
     </div></fieldset>
-    <div class="quote-action"><div><span class="price-label">Fast pris för enkelresa</span><output data-price class="quote-price" aria-live="polite">${money(prices.malmo.kastrup)}</output></div><button class="button button-primary" type="submit">Fortsätt${icon('arrow', 18)}</button></div>
+    <div class="quote-action"><div><span class="price-label">Fast pris för enkelresa</span><output data-price class="quote-price" aria-live="polite">${money(prices.malmo.kastrup)}</output></div><button class="button button-primary" type="submit">Till bokningen${icon('arrow', 17)}</button></div>
   </form>`;
 }
 
 function routeMap() {
-  return `<figure class="route-map" data-route-map>
+  return `<details class="route-preview" open data-route-preview><summary>Karta över resan${icon('chevron', 17)}</summary><figure class="route-map" data-route-map>
     <div class="map-head"><span>Öresundsregionen</span><span>${icon('route', 16)} Flygtaxi</span></div>
     <svg class="map-drawing" viewBox="0 0 500 340" role="img" aria-label="Schematisk karta över Lund, Malmö, Kastrup och Malmö Airport">
       <path class="map-land" d="M0 0h122l-8 28-33 25 13 36-27 33 18 39 15 16-8 28 20 10 24 19-19 25-41 19-8 24-15 38H0Z"/>
@@ -88,7 +88,7 @@ function routeMap() {
       <g class="map-place" data-map-place="sturup"><circle cx="418" cy="238" r="7"/><text x="418" y="270" text-anchor="middle">Malmö Airport</text><text class="map-code" x="418" y="290" text-anchor="middle">MMX</text></g>
     </svg>
     <figcaption><span data-map-caption>Malmö → Kastrup</span><span>Schematisk karta</span></figcaption>
-  </figure>`;
+  </figure></details>`;
 }
 
 function routeSection(cityFilter = cityIds, airportFilter = airportIds, heading = 'Fasta flygpriser') {
@@ -135,7 +135,7 @@ const questions = [
 
 function home() {
   return `<section class="hero container" aria-labelledby="hero-title">
-    <div class="hero-content">${eyebrow('Lund · Malmö', true)}<h1 id="hero-title">Flygtaxi till fast pris</h1><p class="hero-lead">Välj var du vill bli hämtad och vilken flygplats du ska till.</p>${quickQuote()}</div>
+    <div class="hero-content"><h1 id="hero-title">Flygtaxi till fast pris</h1><p class="hero-lead">Från Lund och Malmö till Kastrup eller Malmö Airport.</p>${quickQuote()}${textLink('#flygresor', 'Jämför alla priser')}</div>
     ${routeMap()}
   </section>
   ${routeSection(cityIds, airportIds, 'Jämför våra fyra resor')}
@@ -172,13 +172,14 @@ function booking(params) {
   const airport = airportIds.includes(requestedAirport) ? requestedAirport : 'kastrup';
   const area = cities[city].areas.find(([slug]) => slug === params.get('omrade'));
   const selectedPrice = area ? 'Pris på förfrågan' : money(prices[city][airport]);
-  return `${pageIntro('Planera din resa', 'Boka flygtaxi', 'Fyll i hämtningen och granska din resa.', [['Boka taxi']])}
+  const hasSelectedRoute = cityIds.includes(requestedCity) && airportIds.includes(requestedAirport);
+  return `<section class="page-intro container booking-intro">${breadcrumb([['Boka taxi']])}<h1>Boka flygtaxi</h1><p class="lead">Ange adress och tid för upphämtning.</p></section>
   <section class="section container booking-section" aria-label="Reseuppgifter"><ol class="booking-progress" aria-label="Bokningssteg"><li aria-current="step"><span>1</span> Resa och hämtning</li><li><span>2</span> Granska</li></ol>
-  <form class="booking-form" data-quote data-booking${area ? ` data-area="${escape(area[1])}"` : ''}><h2>Resa och hämtning</h2><div class="field-grid route-fields">${routeFields(city, airport, Boolean(area))}</div>${area ? `<p class="demo-note">Valt område · ${area[1]}. Täckning och pris behöver bekräftas.</p>` : ''}
+  <form class="booking-form" data-quote data-booking${area ? ` data-area="${escape(area[1])}"` : ''}><h2>Upphämtning</h2><details class="booking-route-editor"${hasSelectedRoute ? '' : ' open'}><summary>${hasSelectedRoute ? 'Ändra sträcka' : 'Välj sträcka'}${icon('chevron', 17)}</summary><div class="field-grid route-fields">${routeFields(city, airport, Boolean(area))}</div></details>${area ? `<p class="demo-note">Valt område · ${area[1]}. Täckning och pris behöver bekräftas.</p>` : ''}
   <label>Hämtadress<input name="adress" autocomplete="off" required maxlength="120" placeholder="Gatuadress och nummer${area ? ` i ${escape(area[1])}` : ''}"></label><div class="field-grid"><label>Datum<input type="date" name="datum" required></label><label>Hämtningstid<input type="time" name="tid" required></label></div>
-  <fieldset class="booking-details"><legend>Resenärer och bagage</legend><div class="field-grid"><label>Resenärer<select name="resenarer"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select></label><label>Stora väskor<select name="vaskor"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4+</option></select></label></div><label>Övrig information <span class="optional">valfritt</span><textarea name="meddelande" rows="2" maxlength="250" placeholder="Till exempel port, mötesplats eller behov av barnstol"></textarea></label></fieldset>
+  <fieldset class="booking-details"><legend>Resenärer och bagage</legend><div class="field-grid"><label>Resenärer<select name="resenarer"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select></label><label>Stora väskor<select name="vaskor"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4+</option></select></label></div><details class="booking-note"><summary>Lägg till information <span class="optional">valfritt</span>${icon('chevron', 17)}</summary><label>Mötesplats eller önskemål<textarea name="meddelande" rows="2" maxlength="250" placeholder="Till exempel portnummer eller behov av barnstol"></textarea></label></details></fieldset>
   <div class="booking-submit"><button type="submit" class="button button-primary" disabled>Granska resan${icon('arrow', 18)}</button><noscript><p>Aktivera JavaScript för att granska resan.</p></noscript></div></form>
-  <aside class="info-card booking-summary"><div><h2>Din resa</h2><p class="summary-route" data-route-name>${area?.[1] ?? cities[city].name} → ${airports[airport].name}</p></div><div><span data-price-label class="price-label">${area ? 'Områdespris' : 'Fast pris för enkelresa'}</span><output data-booking-price class="booking-price" aria-live="polite">${selectedPrice}</output></div><p class="demo-note">Förhandsvisning. Uppgifterna stannar på sidan.</p></aside>
+  <aside class="info-card booking-summary"><div><h2>Din resa</h2><p class="summary-route" data-route-name>${area?.[1] ?? cities[city].name} → ${airports[airport].name}</p></div><div><span data-price-label class="price-label">${area ? 'Områdespris' : 'Fast pris för enkelresa'}</span><output data-booking-price class="booking-price" aria-live="polite">${selectedPrice}</output></div><p class="demo-note">Förhandsvisning. Inga uppgifter skickas.</p></aside>
   <section class="review-panel" data-review hidden tabindex="-1"><span class="icon-tile">${icon('check', 24)}</span><h2>Din resesammanfattning</h2><p class="demo-note">Det här är en förhandsvisning. Ingen bokning har skickats.</p><dl data-review-details></dl><button type="button" class="button button-outline" data-edit>Ändra uppgifter${icon('arrow', 17)}</button></section></section>`;
 }
 
