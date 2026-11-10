@@ -9,6 +9,7 @@
   },
   "rewrites": [
     { "source": "/", "destination": "/api/render?__taxi_path=/" },
+    { "source": "/:path*/", "destination": "/api/render?__taxi_path=/:path*" },
     { "source": "/:path*", "destination": "/api/render?__taxi_path=/:path*" }
   ]
 }
