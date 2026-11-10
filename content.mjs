@@ -1,3 +1,11 @@
+// Företagsuppgifter. Tomma värden döljs på webbplatsen tills de fylls i.
+export const site = {
+  name: 'Taxi Syd',
+  url: 'https://taxilundmalmo.se',
+  phone: '', // t.ex. '040-12 34 56'
+  email: '',
+};
+
 export const cities = {
   lund: {
     name: 'Lund', label: 'UNIVERSITETSSTADEN',
@@ -32,10 +40,12 @@ export const cities = {
 };
 
 export const airports = {
-  kastrup: { name: 'Kastrup', full: 'Köpenhamns flygplats', code: 'CPH', slug: 'kastrup', country: 'Danmark' },
-  sturup: { name: 'Malmö Airport', full: 'Malmö Airport (Sturup)', code: 'MMX', slug: 'malmo-airport', country: 'Sverige' },
+  kastrup: { name: 'Kastrup', full: 'Köpenhamns flygplats', code: 'CPH', slug: 'kastrup', country: 'Danmark', place: 'Köpenhamn, Danmark', text: 'Köpenhamns flygplats ligger i Kastrup på den danska sidan av Öresund. Resan går över Öresundsbron, så ta med pass eller nationellt id-kort.' },
+  sturup: { name: 'Malmö Airport', full: 'Malmö Airport (Sturup)', code: 'MMX', slug: 'malmo-airport', country: 'Sverige', place: 'Sturup, Sverige', text: 'Malmö Airport kallas också Sturup och ligger i Svedala kommun, öster om Malmö. På biljetten står flygplatskoden MMX.' },
 };
 
+// Fasta priser per avreseort. Lägg till ett område (t.ex. dalby: { kastrup: 0, sturup: 0 })
+// för att visa fast pris även där – annars visas "Pris på förfrågan".
 export const prices = {
   lund: { kastrup: 1250, sturup: 570 },
   malmo: { kastrup: 950, sturup: 610 },
@@ -43,7 +53,7 @@ export const prices = {
 
 export const guides = [
   {
-    slug: 'malmo-airport-eller-kastrup', title: 'Malmö Airport eller Kastrup?', tag: 'FLYGPLATSER', icon: 'plane',
+    slug: 'malmo-airport-eller-kastrup', title: 'Malmö Airport eller Kastrup?', tag: 'Flygplatser', icon: 'plane',
     intro: 'Två flygplatser, två koder. Kontrollera din biljett innan du väljer destination.',
     sections: [
       ['CPH är Kastrup', 'Köpenhamns flygplats ligger i Danmark. På biljetten står det CPH. Välj Kastrup i reseväljaren och kontrollera din terminal med flygbolaget.'],
@@ -51,7 +61,7 @@ export const guides = [
     ],
   },
   {
-    slug: 'planera-hamtning-infor-flyget', title: 'Så planerar du hämtning inför flyget', tag: 'PLANERA RESAN', icon: 'clock',
+    slug: 'planera-hamtning-infor-flyget', title: 'Så planerar du hämtning inför flyget', tag: 'Planera resan', icon: 'clock',
     intro: 'Sätt tiden för när bilen ska hämta dig utifrån när du behöver vara på flygplatsen.',
     sections: [
       ['Börja med flygbolagets tider', 'Kontrollera när incheckning och bagageinlämning stänger för din avgång. Lägg sedan till marginal för vägen till terminalen.'],
@@ -59,7 +69,7 @@ export const guides = [
     ],
   },
   {
-    slug: 'hamtning-lund-centralstation', title: 'Hämtning vid Lund Centralstation', tag: 'MÖTESPLATSER', icon: 'pin',
+    slug: 'hamtning-lund-centralstation', title: 'Hämtning vid Lund Centralstation', tag: 'Mötesplatser', icon: 'pin',
     intro: 'Gör bytet från tåg till taxi enklare med en tydligt angiven mötesplats.',
     sections: [
       ['Välj en sida av stationen', 'Ange vilken sida av spåren du går ut på och använd en namngiven entré eller gatuadress. Följ skyltningen på plats.'],
@@ -67,7 +77,7 @@ export const guides = [
     ],
   },
   {
-    slug: 'hamtning-malmo-centralstation', title: 'Hämtning vid Malmö Centralstation', tag: 'MÖTESPLATSER', icon: 'pin',
+    slug: 'hamtning-malmo-centralstation', title: 'Hämtning vid Malmö Centralstation', tag: 'Mötesplatser', icon: 'pin',
     intro: 'Malmö C har flera utgångar. Lägg till entré eller gata i dina reseuppgifter.',
     sections: [
       ['Bestäm var ni ska mötas', 'Ange en skyltad utgång eller gatuadress och kontrollera var en bil kan stanna. Skriv namnet på mötesplatsen i reseuppgifterna.'],
@@ -75,7 +85,7 @@ export const guides = [
     ],
   },
   {
-    slug: 'resa-med-barn-i-taxi', title: 'Resa med barn i taxi', tag: 'FÖR FAMILJER', icon: 'users',
+    slug: 'resa-med-barn-i-taxi', title: 'Resa med barn i taxi', tag: 'För familjer', icon: 'users',
     intro: 'Planera sittplatser, eventuell barnstol och bagage i god tid.',
     sections: [
       ['Berätta vad ni behöver', 'Ange hur många vuxna och barn som reser. Om ni behöver barnstol, be att rätt typ av utrustning bekräftas före resan.'],
@@ -83,7 +93,7 @@ export const guides = [
     ],
   },
   {
-    slug: 'bagage-i-flygtaxi', title: 'Bagage i flygtaxi', tag: 'INFÖR RESAN', icon: 'case',
+    slug: 'bagage-i-flygtaxi', title: 'Bagage i flygtaxi', tag: 'Inför resan', icon: 'case',
     intro: 'Planera bilens utrymme efter hur många som reser och vad ni tar med.',
     sections: [
       ['Räkna väskorna', 'Räkna både stora väskor och handbagage. Skriv om något är extra stort, till exempel en golfbag eller hopfällbar barnvagn.'],

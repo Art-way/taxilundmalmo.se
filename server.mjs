@@ -14,7 +14,7 @@ const assets = new Map([
   ['/mark.svg', 'image/svg+xml'],
 ]);
 const host = '127.0.0.1';
-const port = Number(process.env.TAXI_PREVIEW_PORT || 4173);
+const port = Number(process.env.TAXI_PREVIEW_PORT || process.env.PORT || 4173);
 
 const server = createServer(async (request, response) => {
   const send = (status, body, type = 'text/html; charset=utf-8') => {
