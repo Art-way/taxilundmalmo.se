@@ -6,6 +6,9 @@ const assets = new Map([
   ['/styles.css', 'text/css; charset=utf-8'],
   ['/app.js', 'text/javascript; charset=utf-8'],
   ['/oresund-taxi.jpg', 'image/jpeg'],
+  ['/taxi-syd-oresund.jpg', 'image/jpeg'],
+  ['/taxi-syd-lund.jpg', 'image/jpeg'],
+  ['/taxi-syd-flygplats.jpg', 'image/jpeg'],
   ['/manrope.woff2', 'font/woff2'],
   ['/manrope-OFL.txt', 'text/plain; charset=utf-8'],
   ['/familjen-grotesk.woff2', 'font/woff2'],
@@ -22,7 +25,9 @@ const server = createServer(async (request, response) => {
     response.end(request.method === 'HEAD' ? undefined : body);
   };
 
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
+  // Without JavaScript the booking form posts here. The body is never read, stored or echoed.
+  const posted = request.method === 'POST' && /^\/boka-taxi\/?$/.test(new URL(request.url, `http://${host}:${port}`).pathname);
+  if (request.method !== 'GET' && request.method !== 'HEAD' && !posted) {
     response.setHeader('Allow', 'GET, HEAD');
     send(405, 'Method not allowed', 'text/plain; charset=utf-8');
     return;
@@ -38,7 +43,7 @@ const server = createServer(async (request, response) => {
     }
 
     const page = paths.get(pathname.endsWith('/') ? pathname : `${pathname}/`);
-    if (page) send(200, page(url.searchParams));
+    if (page) send(200, posted ? page(new URLSearchParams(), { posted: true }) : page(url.searchParams));
     else send(404, notFound(pathname));
   } catch (error) {
     console.error(error);

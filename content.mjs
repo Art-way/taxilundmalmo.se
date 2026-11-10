@@ -9,7 +9,7 @@ export const site = {
 export const cities = {
   lund: {
     name: 'Lund', label: 'UNIVERSITETSSTADEN',
-    intro: 'Se priset från Lund till Kastrup eller Malmö Airport och välj var du vill bli hämtad.',
+    intro: 'Boka taxi i Lund – mellan adresser i staden, till orterna runt omkring eller till Kastrup och Malmö Airport till fast pris.',
     areas: [
       ['dalby', 'Dalby', 'Ange gatuadress och husnummer i Dalby. Om du vill mötas vid torget, beskriv vilken sida som passar dig.'],
       ['sodra-sandby', 'Södra Sandby', 'Skriv hela adressen i Södra Sandby och ange om bilen kan stanna vid entrén.'],
@@ -24,7 +24,7 @@ export const cities = {
   },
   malmo: {
     name: 'Malmö', label: 'STADEN VID SUNDET',
-    intro: 'Se priset från Malmö till Kastrup eller Malmö Airport och välj var du vill bli hämtad.',
+    intro: 'Boka taxi i Malmö – mellan adresser i staden, till orterna runt omkring eller till Kastrup och Malmö Airport till fast pris.',
     areas: [
       ['hyllie', 'Hyllie', 'Vid hämtning nära stationen, köpcentret eller arenan kan du ange entréns namn och vilken gata du väntar på.'],
       ['limhamn', 'Limhamn', 'Ange gatuadress och lägg till en mötespunkt om entrén vetter mot en gågata eller gård.'],
@@ -44,8 +44,9 @@ export const airports = {
   sturup: { name: 'Malmö Airport', full: 'Malmö Airport (Sturup)', code: 'MMX', slug: 'malmo-airport', country: 'Sverige', place: 'Sturup, Sverige', text: 'Malmö Airport kallas också Sturup och ligger i Svedala kommun, öster om Malmö. På biljetten står flygplatskoden MMX.' },
 };
 
-// Fasta priser per avreseort. Lägg till ett område (t.ex. dalby: { kastrup: 0, sturup: 0 })
-// för att visa fast pris även där – annars visas "Pris på förfrågan".
+// Fasta priser: prices[från][till]. Priset gäller bara i den angivna riktningen.
+// Alla resor utan rad här visas som "Pris på förfrågan".
+// Exempel: returresa  kastrup: { lund: 1250 }  ·  område  dalby: { kastrup: 1350 }  ·  lokalt  lund: { malmo: 450 }
 export const prices = {
   lund: { kastrup: 1250, sturup: 570 },
   malmo: { kastrup: 950, sturup: 610 },
