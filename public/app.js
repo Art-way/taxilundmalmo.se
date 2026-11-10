@@ -18,8 +18,10 @@ function quoteFor(form) {
   const from = form.elements.fran;
   const to = form.elements.till;
   const areaApplies = form.hasAttribute('data-area');
+  const origin = from.selectedOptions?.[0].textContent ?? form.querySelector('[name="fran"]:checked').dataset.label;
+  const destination = to.selectedOptions?.[0].textContent.split(' (')[0] ?? form.querySelector('[name="till"]:checked').dataset.label;
   return {
-    route: `${form.dataset.area ?? from.selectedOptions[0].textContent} → ${to.selectedOptions[0].textContent.split(' (')[0]}`,
+    route: `${form.dataset.area ?? origin} → ${destination}`,
     price: areaApplies ? 'Pris på förfrågan' : `${formatPrice.format(prices[from.value][to.value])} kr`,
     areaApplies,
   };
@@ -28,6 +30,7 @@ function quoteFor(form) {
 document.querySelectorAll('form[data-quote]').forEach(form => {
   const output = form.querySelector('[data-price]');
   const summary = document.querySelector('.booking-summary');
+  const map = document.querySelector('[data-route-map]');
 
   function updateQuote() {
     const quote = quoteFor(form);
@@ -35,30 +38,33 @@ document.querySelectorAll('form[data-quote]').forEach(form => {
     if (form.hasAttribute('data-booking')) {
       summary.querySelector('[data-route-name]').textContent = quote.route;
       summary.querySelector('[data-booking-price]').textContent = quote.price;
-      summary.querySelector('[data-price-label]').textContent = quote.areaApplies ? 'OMRÅDESPRIS' : 'FAST PRIS · ENKELRESA';
+      summary.querySelector('[data-price-label]').textContent = quote.areaApplies ? 'Områdespris' : 'Fast pris för enkelresa';
+    }
+    if (map) {
+      const from = form.elements.fran.value;
+      const to = form.elements.till.value;
+      map.querySelector('[data-map-caption]').textContent = quote.route;
+      for (const line of map.querySelectorAll('[data-map-route]')) {
+        line.classList.toggle('is-active', line.dataset.mapRoute === `${from}:${to}`);
+      }
+      for (const point of map.querySelectorAll('[data-map-place]')) {
+        point.classList.toggle('is-active', point.dataset.mapPlace === from || point.dataset.mapPlace === to);
+      }
     }
   }
 
-  form.elements.fran.addEventListener('change', updateQuote);
-  form.elements.till.addEventListener('change', updateQuote);
+  form.addEventListener('change', event => {
+    if (event.target.name === 'fran' || event.target.name === 'till') updateQuote();
+  });
   updateQuote();
-});
-
-document.querySelectorAll('.filter').forEach(filter => {
-  const buttons = [...filter.querySelectorAll('button')];
-  const cards = [...filter.closest('section').querySelectorAll('.route-card')];
-
-  buttons.forEach(button => button.addEventListener('click', () => {
-    const city = button.dataset.filter;
-    buttons.forEach(item => item.setAttribute('aria-pressed', String(item === button)));
-    cards.forEach(card => { card.hidden = city !== 'all' && card.dataset.city !== city; });
-  }));
 });
 
 const booking = document.querySelector('[data-booking]');
 if (booking) {
   const review = document.querySelector('[data-review]');
   const reviewDetails = review.querySelector('[data-review-details]');
+  const summary = document.querySelector('.booking-summary');
+  const [detailsStep, reviewStep] = document.querySelectorAll('.booking-progress li');
   const now = new Date();
   const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   booking.elements.datum.min = localDate;
@@ -91,8 +97,10 @@ if (booking) {
     }));
 
     booking.hidden = true;
-    document.querySelector('.booking-summary').hidden = true;
+    summary.hidden = true;
     review.hidden = false;
+    detailsStep.removeAttribute('aria-current');
+    reviewStep.setAttribute('aria-current', 'step');
     review.focus();
   });
 
@@ -101,7 +109,9 @@ if (booking) {
   review.querySelector('[data-edit]').addEventListener('click', () => {
     review.hidden = true;
     booking.hidden = false;
-    document.querySelector('.booking-summary').hidden = false;
+    summary.hidden = false;
+    reviewStep.removeAttribute('aria-current');
+    detailsStep.setAttribute('aria-current', 'step');
     (booking.elements.fran.disabled ? booking.elements.till : booking.elements.fran).focus();
   });
   booking.querySelector('button[type="submit"]').disabled = false;

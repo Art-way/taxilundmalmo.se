@@ -1,7 +1,7 @@
 export const cities = {
   lund: {
     name: 'Lund', label: 'UNIVERSITETSSTADEN',
-    intro: 'Från kullerstensgatorna i Lund till avgångshallen. Välj Kastrup eller Malmö Airport och se priset innan du planerar resten av resan.',
+    intro: 'Se priset från Lund till Kastrup eller Malmö Airport och välj var du vill bli hämtad.',
     areas: [
       ['dalby', 'Dalby', 'Ange gatuadress och husnummer i Dalby. Om du vill mötas vid torget, beskriv vilken sida som passar dig.'],
       ['sodra-sandby', 'Södra Sandby', 'Skriv hela adressen i Södra Sandby och ange om bilen kan stanna vid entrén.'],
@@ -16,7 +16,7 @@ export const cities = {
   },
   malmo: {
     name: 'Malmö', label: 'STADEN VID SUNDET',
-    intro: 'Från Malmö och ut mot världen. Se ditt fasta pris till Kastrup eller Malmö Airport och välj när du vill bli hämtad.',
+    intro: 'Se priset från Malmö till Kastrup eller Malmö Airport och välj var du vill bli hämtad.',
     areas: [
       ['hyllie', 'Hyllie', 'Vid hämtning nära stationen, köpcentret eller arenan kan du ange entréns namn och vilken gata du väntar på.'],
       ['limhamn', 'Limhamn', 'Ange gatuadress och lägg till en mötespunkt om entrén vetter mot en gågata eller gård.'],

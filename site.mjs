@@ -19,7 +19,6 @@ const icons = {
   chevron: '<path d="m6 9 6 6 6-6"/>',
   pin: '<path d="M20 10c0 5-8 10-8 10s-8-5-8-10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
   plane: '<path d="M22 2 9 15m13-13-5 20-5-9-9-5 19-6ZM9 15l-3 3"/>',
-  tag: '<path d="M20 13 11 22 2 13V3h10l8 8a1.4 1.4 0 0 1 0 2Z"/><circle cx="7.5" cy="8" r="1.2"/>',
   clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   route: '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.5 6H17a3 3 0 0 1 0 6H7a3 3 0 0 0 0 6h8.5"/>',
   users: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m1-15a3 3 0 0 1 0 6m2 3a4 4 0 0 1 3 4v2"/>',
@@ -57,26 +56,58 @@ function routeFields(city, airport, locked = false) {
 }
 
 function quickQuote() {
-  return `<form action="/boka-taxi/" method="get" class="quick-quote" data-quote><div class="field-grid route-fields">${routeFields('malmo', 'kastrup')}</div><div class="quote-action"><div><span class="price-label">FAST PRIS · ENKELRESA</span><output data-price class="quote-price">${money(prices.malmo.kastrup)}</output></div><button class="button button-primary" type="submit">Fortsätt${icon('arrow', 18)}</button></div></form>`;
+  return `<form action="/boka-taxi/" method="get" class="quick-quote" data-quote>
+    <fieldset class="quote-options"><legend>Hämta mig i</legend><div class="option-grid">
+      ${cityIds.map(id => `<label class="quote-option"><input type="radio" name="fran" value="${id}" data-label="${cities[id].name}"${id === 'malmo' ? ' checked' : ''}><span>${cities[id].name}</span></label>`).join('')}
+    </div></fieldset>
+    <fieldset class="quote-options"><legend>Kör mig till</legend><div class="option-grid">
+      ${airportIds.map(id => `<label class="quote-option"><input type="radio" name="till" value="${id}" data-label="${airports[id].name}"${id === 'kastrup' ? ' checked' : ''}><span>${airports[id].name}<small>${airports[id].code}</small></span></label>`).join('')}
+    </div></fieldset>
+    <div class="quote-action"><div><span class="price-label">Fast pris för enkelresa</span><output data-price class="quote-price" aria-live="polite">${money(prices.malmo.kastrup)}</output></div><button class="button button-primary" type="submit">Fortsätt${icon('arrow', 18)}</button></div>
+  </form>`;
 }
 
-function routeCards(cityFilter = cityIds, airportFilter = airportIds) {
-  return `<div class="routes-grid">${cityFilter.flatMap(city => airportFilter.map(id => {
-    const airport = airports[id];
-    return `<a class="route-card" href="${routePath(city, id)}" data-city="${city}"><div class="card-top"><span class="icon-tile ${id}">${icon('plane', 22)}</span><span class="code">${airport.code}</span></div><p class="from">Från ${cities[city].name}</p><h3>${airport.name}</h3><div class="card-bottom"><span>${money(prices[city][id])}</span><span class="round-arrow">${icon('upRight', 17)}</span></div></a>`;
-  })).join('')}</div>`;
+function routeMap() {
+  return `<figure class="route-map" data-route-map>
+    <div class="map-head"><span>Öresundsregionen</span><span>${icon('route', 16)} Flygtaxi</span></div>
+    <svg class="map-drawing" viewBox="0 0 500 340" role="img" aria-label="Schematisk karta över Lund, Malmö, Kastrup och Malmö Airport">
+      <path class="map-land" d="M0 0h122l-8 28-33 25 13 36-27 33 18 39 15 16-8 28 20 10 24 19-19 25-41 19-8 24-15 38H0Z"/>
+      <path class="map-land" d="M307 0h193v340H277l-9-22-17-21 3-25-15-20-5-23-11-23 9-25 4-26 17-12 4-23 21-17 7-35 14-22Z"/>
+      <path class="map-grid" d="M0 70h500M0 140h500M0 210h500M0 280h500M100 0v340M200 0v340M300 0v340M400 0v340"/>
+      <path class="map-roads" d="M295 67 338 92l35-30 51 17 44 38m-130-25-8 47 30 40 59 9 36 32m-95-41-17 62 22 46m-122-75 59 17 41 12 81 4m-197-96 55 35 48-5m-258 52-40 21 17 42"/>
+      <text class="map-region" x="17" y="122">Danmark</text>
+      <text class="map-region" x="418" y="42">Skåne</text>
+      <text class="map-water" x="158" y="117" transform="rotate(-15 158 117)">Öresund</text>
+      <path class="map-route" data-map-route="lund:kastrup" d="M374 87Q345 94 320 146L282 173 224 211 103 239"/>
+      <path class="map-route is-active" data-map-route="malmo:kastrup" d="M282 173 224 211 103 239"/>
+      <path class="map-route" data-map-route="lund:sturup" d="M374 87Q353 112 362 156Q368 198 418 238"/>
+      <path class="map-route" data-map-route="malmo:sturup" d="M282 173Q322 179 352 217Q375 237 418 238"/>
+      <g class="map-place" data-map-place="lund"><circle cx="374" cy="87" r="7"/><text x="365" y="70" text-anchor="end">Lund</text></g>
+      <g class="map-place is-active" data-map-place="malmo"><circle cx="282" cy="173" r="7"/><text x="270" y="158" text-anchor="end">Malmö</text></g>
+      <g class="map-place is-active" data-map-place="kastrup"><circle cx="103" cy="239" r="7"/><text x="103" y="271" text-anchor="middle">Kastrup</text><text class="map-code" x="103" y="291" text-anchor="middle">CPH</text></g>
+      <g class="map-place" data-map-place="sturup"><circle cx="418" cy="238" r="7"/><text x="418" y="270" text-anchor="middle">Malmö Airport</text><text class="map-code" x="418" y="290" text-anchor="middle">MMX</text></g>
+    </svg>
+    <figcaption><span data-map-caption>Malmö → Kastrup</span><span>Schematisk karta</span></figcaption>
+  </figure>`;
 }
 
-function routeSection(cityFilter = cityIds, airportFilter = airportIds, filter = false, heading = 'Välj din flygresa.') {
-  return `<section class="section container" id="flygresor"><div class="section-head"><div>${eyebrow('VÅRA FLYGRESOR', true)}<h2>${heading}</h2></div>${filter ? '<div class="filter" role="group" aria-label="Filtrera avreseort"><button type="button" data-filter="all" aria-pressed="true">Alla resor</button><button type="button" data-filter="lund" aria-pressed="false">Lund</button><button type="button" data-filter="malmo" aria-pressed="false">Malmö</button></div>' : ''}</div>${routeCards(cityFilter, airportFilter)}</section>`;
+function routeSection(cityFilter = cityIds, airportFilter = airportIds, heading = 'Fasta flygpriser') {
+  return `<section class="section container price-section" id="flygresor" aria-labelledby="prices-heading">
+    <div class="section-head"><h2 id="prices-heading">${heading}</h2><p class="section-note">Pris per enkelresa</p></div>
+    <div class="fare-board"><table class="fare-table" aria-labelledby="prices-heading">
+      <thead><tr><th scope="col">Från</th>${airportFilter.map(id => `<th scope="col">${airports[id].name}<small>${airports[id].code}</small></th>`).join('')}</tr></thead>
+      <tbody>${cityFilter.map(city => `<tr><th scope="row">${cities[city].name}</th>${airportFilter.map(id => `<td><a href="${routePath(city, id)}" aria-label="${cities[city].name} till ${airports[id].name}, ${money(prices[city][id])}"><span>${money(prices[city][id])}</span>${icon('arrow', 17)}</a></td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div>
+    <p class="fare-note">Välj ett pris för att se detaljer om resan.</p>
+  </section>`;
 }
 
 function cityCards() {
-  return `<div class="city-grid">${cityIds.map(id => `<a href="${cityPath(id)}" class="city-card city-${id}"><div>${eyebrow(cities[id].label)}<h3>${cities[id].name}.</h3><span class="text-link">Utforska ${cities[id].name}${icon('arrow', 17)}</span></div><svg class="city-drawing" aria-hidden="true" viewBox="0 0 260 160" fill="none"><path d="M0 114c48-30 83-31 132-9s76 19 128-18M4 72c50 21 77 11 102-17s61-36 154 0M23 160c46-61 39-83 38-160M181 160c-24-61-10-106 35-160M0 142c56 6 86-7 118-40s87-42 142-23" stroke="currentColor" stroke-opacity=".28" stroke-width="1.4"/><path d="M53 124c29-36 56-10 76-44 12-21 31-34 53-38" stroke="currentColor" stroke-dasharray="4 7" stroke-linecap="round" stroke-width="2.4"/><circle cx="53" cy="124" r="6" fill="currentColor"/><circle cx="182" cy="42" r="10" fill="currentColor"/><circle cx="182" cy="42" r="3.5" fill="#fff"/></svg></a>`).join('')}</div>`;
+  return `<div class="city-grid">${cityIds.map(id => `<a href="${cityPath(id)}" class="city-card">${icon('pin', 20)}<div><h3>Taxi i ${cities[id].name}</h3><p>Priser och upphämtningsområden</p></div>${icon('arrow', 19)}</a>`).join('')}</div>`;
 }
 
 function guideCards(items) {
-  return `<div class="guide-grid">${items.map(guide => `<a class="guide-card" href="${guidePath(guide)}"><span class="icon-tile">${icon(guide.icon, 21)}</span>${eyebrow(guide.tag)}<h3>${guide.title}</h3><p>${guide.intro}</p><span class="text-link">Läs guiden${icon('arrow', 17)}</span></a>`).join('')}</div>`;
+  return `<div class="guide-grid">${items.map(guide => `<a class="guide-card" href="${guidePath(guide)}"><span class="icon-tile">${icon(guide.icon, 17)}</span><div><h3>${guide.title}</h3><p>${guide.intro}</p></div>${icon('arrow', 17)}</a>`).join('')}</div>`;
 }
 
 function breadcrumb(items) {
@@ -98,17 +129,18 @@ function faq(items) {
 const questions = [
   ['Vad kostar flygtaxi?', 'Välj Lund eller Malmö som avreseort och Kastrup eller Malmö Airport som destination. De fyra priserna finns på <a href="/priser/">prissidan</a>.'],
   ['Vilken flygplats ska jag välja?', 'Välj Kastrup om det står CPH på din biljett. Välj Malmö Airport, även kallad Sturup, om det står MMX.'],
-  ['Kan jag prova att boka en resa?', 'Ja. I den lokala förhandsvisningen kan du välja en resa och se en sammanfattning. Formuläret skickar ingen bokning.'],
+  ['Kan jag prova att boka en resa?', 'Ja. Du kan välja en resa och granska uppgifterna i förhandsvisningen. Formuläret skickar ingen bokning.'],
   ['Vad gör jag om jag behöver extra utrymme?', 'Ange antal resenärer och beskriv väskor eller särskilda behov i reseuppgifterna. Bilens kapacitet behöver bekräftas inför en riktig resa.'],
 ];
 
 function home() {
-  return `<section class="hero container" aria-labelledby="hero-title"><div class="hero-content">${eyebrow('FLYGTAXI FRÅN LUND & MALMÖ', true)}<h1 id="hero-title">Taxi till flyget.<br><span>Fast pris.</span></h1><p class="hero-lead">Från Lund och Malmö till Kastrup eller Sturup. Se ditt fasta pris direkt.</p>${quickQuote()}</div><figure class="hero-photo"><img src="/oresund-taxi.jpg" alt="Vit taxi på en kustväg mot Öresundsbron" width="1536" height="1024" fetchpriority="high"><figcaption><span class="photo-dot"></span> ÖRESUND <span class="caption-line"></span> SKÅNE → CPH</figcaption></figure></section>
-  <div class="container"><div class="benefits"><div>${icon('tag', 22)}<span>Fast pris före resan</span></div><div>${icon('plane', 22)}<span>Kastrup &amp; Malmö Airport</span></div><div>${icon('route', 22)}<span>Från Lund eller Malmö</span></div></div></div>
-  ${routeSection(cityIds, airportIds, true)}
-  <section class="section container"><div class="section-head"><div>${eyebrow('TAXI SYD I SKÅNE', true)}<h2>Var börjar din resa?</h2></div></div>${cityCards()}</section>
-  <section class="section container"><div class="section-head"><div>${eyebrow('INFÖR AVRESAN', true)}<h2>Redo för flyget?</h2></div>${textLink('/guider/', 'Alla reseguider')}</div>${guideCards(guides.slice(0, 3))}</section>
-  <section class="section container faq-layout"><div>${eyebrow('BRA ATT VETA', true)}<h2>Vanliga frågor.</h2>${textLink('/vanliga-fragor/', 'Se alla frågor')}</div>${faq(questions.slice(0, 3))}</section>`;
+  return `<section class="hero container" aria-labelledby="hero-title">
+    <div class="hero-content">${eyebrow('Lund · Malmö', true)}<h1 id="hero-title">Flygtaxi till fast pris</h1><p class="hero-lead">Välj var du vill bli hämtad och vilken flygplats du ska till.</p>${quickQuote()}</div>
+    ${routeMap()}
+  </section>
+  ${routeSection(cityIds, airportIds, 'Jämför våra fyra resor')}
+  <section class="section container"><div class="section-head"><h2>Upphämtning i Lund och Malmö</h2></div>${cityCards()}</section>
+  <section class="section container help-grid"><div><h2>Inför avresan</h2>${guideCards(guides.slice(0, 2))}${textLink('/guider/', 'Alla reseguider')}</div><div><h2>Vanliga frågor</h2>${faq(questions.slice(0, 3))}${textLink('/vanliga-fragor/', 'Se alla frågor')}</div></section>`;
 }
 
 function cityPage(id) {
@@ -140,12 +172,13 @@ function booking(params) {
   const airport = airportIds.includes(requestedAirport) ? requestedAirport : 'kastrup';
   const area = cities[city].areas.find(([slug]) => slug === params.get('omrade'));
   const selectedPrice = area ? 'Pris på förfrågan' : money(prices[city][airport]);
-  return `${pageIntro('PLANERA DIN RESA', 'Boka flygtaxi.', 'Välj resa, fyll i hämtningen och granska dina uppgifter.', [['Boka taxi']])}
-  <section class="section container booking-section"><form class="booking-form" data-quote data-booking${area ? ` data-area="${escape(area[1])}"` : ''}><p class="demo-note">Lokal förhandsvisning. Uppgifterna stannar på sidan och ingen bokning skickas.</p><h2>Din resa</h2><div class="field-grid route-fields">${routeFields(city, airport, Boolean(area))}</div>${area ? `<p class="demo-note">Valt område · ${area[1]}. Täckning och pris behöver bekräftas.</p>` : ''}
+  return `${pageIntro('Planera din resa', 'Boka flygtaxi', 'Fyll i hämtningen och granska din resa.', [['Boka taxi']])}
+  <section class="section container booking-section" aria-label="Reseuppgifter"><ol class="booking-progress" aria-label="Bokningssteg"><li aria-current="step"><span>1</span> Resa och hämtning</li><li><span>2</span> Granska</li></ol>
+  <form class="booking-form" data-quote data-booking${area ? ` data-area="${escape(area[1])}"` : ''}><h2>Resa och hämtning</h2><div class="field-grid route-fields">${routeFields(city, airport, Boolean(area))}</div>${area ? `<p class="demo-note">Valt område · ${area[1]}. Täckning och pris behöver bekräftas.</p>` : ''}
   <label>Hämtadress<input name="adress" autocomplete="off" required maxlength="120" placeholder="Gatuadress och nummer${area ? ` i ${escape(area[1])}` : ''}"></label><div class="field-grid"><label>Datum<input type="date" name="datum" required></label><label>Hämtningstid<input type="time" name="tid" required></label></div>
-  <div class="field-grid"><label>Resenärer<select name="resenarer"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select></label><label>Stora väskor<select name="vaskor"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4+</option></select></label></div><label>Övrig information <span class="optional">valfritt</span><textarea name="meddelande" rows="3" maxlength="250" placeholder="Till exempel port, mötesplats eller behov av barnstol"></textarea></label>
+  <fieldset class="booking-details"><legend>Resenärer och bagage</legend><div class="field-grid"><label>Resenärer<select name="resenarer"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select></label><label>Stora väskor<select name="vaskor"><option>0</option><option>1</option><option selected>2</option><option>3</option><option>4+</option></select></label></div><label>Övrig information <span class="optional">valfritt</span><textarea name="meddelande" rows="2" maxlength="250" placeholder="Till exempel port, mötesplats eller behov av barnstol"></textarea></label></fieldset>
   <div class="booking-submit"><button type="submit" class="button button-primary" disabled>Granska resan${icon('arrow', 18)}</button><noscript><p>Aktivera JavaScript för att granska resan.</p></noscript></div></form>
-  <aside class="info-card booking-summary"><span class="icon-tile">${icon('plane', 23)}</span>${eyebrow('DIN RESA', true)}<h2 data-route-name>${area?.[1] ?? cities[city].name} → ${airports[airport].name}</h2><span data-price-label class="price-label">${area ? 'OMRÅDESPRIS' : 'FAST PRIS · ENKELRESA'}</span><output data-booking-price class="booking-price">${selectedPrice}</output><p>Kontrollera datum, hämtningstid och flygplats. Vid särskilda önskemål behöver bil och eventuella tillägg bekräftas.</p></aside>
+  <aside class="info-card booking-summary"><div><h2>Din resa</h2><p class="summary-route" data-route-name>${area?.[1] ?? cities[city].name} → ${airports[airport].name}</p></div><div><span data-price-label class="price-label">${area ? 'Områdespris' : 'Fast pris för enkelresa'}</span><output data-booking-price class="booking-price" aria-live="polite">${selectedPrice}</output></div><p class="demo-note">Förhandsvisning. Uppgifterna stannar på sidan.</p></aside>
   <section class="review-panel" data-review hidden tabindex="-1"><span class="icon-tile">${icon('check', 24)}</span><h2>Din resesammanfattning</h2><p class="demo-note">Det här är en förhandsvisning. Ingen bokning har skickats.</p><dl data-review-details></dl><button type="button" class="button button-outline" data-edit>Ändra uppgifter${icon('arrow', 17)}</button></section></section>`;
 }
 
@@ -155,7 +188,7 @@ function add(path, title, description, body) {
 
 add('/', 'Flygtaxi från Lund och Malmö', 'Taxi från Lund och Malmö till Kastrup och Malmö Airport. Se fasta priser och planera din flygresa.', home);
 add('/boka-taxi/', 'Boka taxi', 'Planera en taxiresa till Kastrup eller Malmö Airport.', booking);
-add('/priser/', 'Fasta priser för flygtaxi', 'Jämför fasta priser från Lund och Malmö.', () => `${pageIntro('PRISER', 'Fasta priser.', 'Fyra resor från Lund och Malmö till Kastrup och Malmö Airport. Välj en resa för detaljer och bokning.', [['Priser']])}${routeSection(cityIds, airportIds, true, 'Jämför våra fyra resor.')}`);
+add('/priser/', 'Fasta priser för flygtaxi', 'Jämför fasta priser från Lund och Malmö.', () => `${pageIntro('PRISER', 'Fasta priser', 'Fyra resor från Lund och Malmö till Kastrup och Malmö Airport. Välj en resa för detaljer och bokning.', [['Priser']])}${routeSection(cityIds, airportIds, 'Jämför våra fyra resor')}`);
 add('/om-oss/', 'Om Taxi Syd', 'Taxi Syd och våra flygresor från Lund och Malmö.', () => `${pageIntro('TAXI SYD · SKÅNE', 'Om Taxi Syd.', 'Taxi Syd samlar resor från Lund och Malmö till två flygplatser, med ett fast pris för varje visad rutt.', [['Om Taxi Syd']])}<section class="section container">${cityCards()}</section>${callout('På väg till flyget?', 'Välj din avreseort och jämför resorna till Kastrup och Sturup.')}`);
 add('/kontakt/', 'Kontakt', 'Kontakt och reseinformation för Taxi Syd.', () => `${pageIntro('TAXI SYD · KONTAKT', 'Hur kan vi hjälpa dig?', 'Kontaktuppgifter läggs till när Taxi Syd är redo att ta emot förfrågningar.', [['Kontakt']])}<section class="section container two-columns"><div class="info-card"><h2>Planera en resa.</h2><p>Prova reseväljaren, se ett fast pris och granska en lokal resesammanfattning.</p>${textLink('/boka-taxi/', 'Öppna reseplaneringen')}</div><div class="info-card"><h2>Har du en fråga?</h2><p>Läs om flygplatser, hämtning och förhandsvisningen.</p>${textLink('/vanliga-fragor/', 'Vanliga frågor')}</div></section>`);
 add('/vanliga-fragor/', 'Vanliga frågor', 'Svar på frågor om flygtaxi och reseplanering.', () => `${pageIntro('HJÄLP INFÖR RESAN', 'Vanliga frågor.', 'Hitta svar om priser, destinationer och reseplanering.', [['Vanliga frågor']])}<section class="section container narrow">${faq(questions)}</section>`);
@@ -175,7 +208,7 @@ for (const id of cityIds) {
 for (const id of airportIds) {
   const airport = airports[id];
   const title = `Taxi till ${airport.name}`;
-  add(airportPath(id), title, `Jämför flygtaxi till ${airport.name} från Malmö och Lund.`, () => `${pageIntro(`FLYGPLATSKOD · ${airport.code}`, `${title}.`, `${airport.full} i ${airport.country}. Välj din avreseort för fast pris och reseplanering.`, [['Flygtaxi', '/flygtaxi/'], [airport.name]])}${routeSection(cityIds, [id], false, 'Välj var du åker från.')}${callout('Rätt flygplats från början.', 'Kontrollera flygplatskoden på din biljett före bokningen.', guidePath(guides[0]), 'Jämför flygplatserna')}`);
+  add(airportPath(id), title, `Jämför flygtaxi till ${airport.name} från Malmö och Lund.`, () => `${pageIntro(`FLYGPLATSKOD · ${airport.code}`, title, `${airport.full} i ${airport.country}. Välj din avreseort för fast pris och reseplanering.`, [['Flygtaxi', '/flygtaxi/'], [airport.name]])}${routeSection(cityIds, [id], 'Välj var du åker från')}${callout('Rätt flygplats från början.', 'Kontrollera flygplatskoden på din biljett före bokningen.', guidePath(guides[0]), 'Jämför flygplatserna')}`);
 }
 
 for (const guide of guides) {
