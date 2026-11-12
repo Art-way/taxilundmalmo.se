@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { airports, cities, guides, prices, site } from './content.mjs';
 
+// Keep editorial pages as drafts for launch. Place data still powers the booking flow.
+const publishAreaPages = false;
+const publishGuides = false;
 const paths = new Map();
 const cityIds = ['lund', 'malmo'];
 const airportIds = Object.keys(airports);
@@ -36,11 +39,11 @@ const priceText = (origin, airport, fallback = 'Pris på förfrågan') => {
 };
 
 const cityPath = id => `/${id}/`;
-const areaPath = origin => `/${origin.city}/${origin.slug}/`;
 const airportPath = id => `/flygtaxi/${airports[id].slug}/`;
 const routePath = (city, airport) => `/${city}/taxi-till-${airports[airport].slug}/`;
 const guidePath = guide => `/guider/${guide.slug}/`;
 const bookingPath = (from, to) => `/boka-taxi/${from || to ? '?' : ''}${[from && `fran=${from}`, to && `till=${to}`].filter(Boolean).join('&amp;')}`;
+const areaLink = (city, slug) => publishAreaPages ? `/${city}/${slug}/` : bookingPath(slug, '');
 const telHref = site.phone ? `tel:${site.phone.replace(/[^\d+]/g, '')}` : '';
 
 const icons = {
@@ -91,7 +94,7 @@ function cityNav(id, path) {
   const city = cities[id];
   return navGroup(city.name, path.startsWith(cityPath(id)), [
     [`Flygtaxi från ${city.name}`, `${navLinks(airportIds.map(a => [routePath(id, a), `${city.name} – ${airports[a].name}`, money(prices[id][a])]))}${textLink(cityPath(id), `Allt om taxi i ${city.name}`)}`],
-    ['Områden', `<div class="nav-areas">${navLinks(city.areas.map(([slug, name]) => [`/${id}/${slug}/`, name]))}</div>`],
+    ['Områden', `<div class="nav-areas">${navLinks(city.areas.map(([slug, name]) => [areaLink(id, slug), name]))}</div>`],
   ]);
 }
 
@@ -103,7 +106,7 @@ function header(path) {
   const plainLink = (href, label) => `<a class="nav-link${path.startsWith(href) ? ' is-current' : ''}" href="${href}">${label}</a>`;
   return `<header class="site-header"><div class="container header-row">${wordmark(path === '/')}
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="main-nav"><span class="menu-open">${icon('menu', 22)}</span><span class="menu-close">${icon('close', 22)}</span><span class="sr-only">Meny</span></button>
-    <nav id="main-nav" class="main-nav" aria-label="Huvudmeny">${cityNav('lund', path)}${cityNav('malmo', path)}${flight}${plainLink('/priser/', 'Priser')}${plainLink('/guider/', 'Reseguider')}${plainLink('/kontakt/', 'Kontakt')}</nav>
+    <nav id="main-nav" class="main-nav" aria-label="Huvudmeny">${cityNav('lund', path)}${cityNav('malmo', path)}${flight}${plainLink('/priser/', 'Priser')}${publishGuides ? plainLink('/guider/', 'Reseguider') : ''}${plainLink('/kontakt/', 'Kontakt')}</nav>
     <div class="header-actions">${site.phone ? `<a class="header-phone" href="${telHref}">${icon('phone', 18)}${esc(site.phone)}</a>` : ''}${button('/boka-taxi/', 'Boka taxi', 'accent', false)}</div>
   </div></header>`;
 }
@@ -113,7 +116,7 @@ function footer(path) {
   const cityColumn = id => column(`Taxi i ${cities[id].name}`, [
     [cityPath(id), `Taxi i ${cities[id].name}`],
     ...airportIds.map(a => [routePath(id, a), `${cities[id].name} – ${airports[a].name}`]),
-    ...cities[id].areas.map(([slug, name]) => [`/${id}/${slug}/`, name]),
+    ...(publishAreaPages ? cities[id].areas.map(([slug, name]) => [areaLink(id, slug), name]) : []),
   ]);
   const contact = [site.phone && `<a href="${telHref}">${esc(site.phone)}</a>`, site.email && `<a href="mailto:${esc(site.email)}">${esc(site.email)}</a>`].filter(Boolean).join('<br>');
   return `<footer class="site-footer"><div class="container">
@@ -121,7 +124,7 @@ function footer(path) {
       <div class="footer-brand">${wordmark()}<p>Taxi i Lund, Malmö och närområdet. Flygtaxi till Kastrup och Malmö Airport till fast pris.</p>${contact ? `<p class="footer-contact">${contact}</p>` : ''}</div>
       ${cityColumn('lund')}${cityColumn('malmo')}
       ${column('Flygtaxi', [['/flygtaxi/', 'Flygtaxi'], ...airportIds.map(a => [airportPath(a), `Taxi till ${airports[a].name} (${airports[a].code})`]), ['/priser/', 'Priser'], ['/boka-taxi/', 'Boka taxi']])}
-      ${column('Information', [['/om-oss/', 'Om Taxi Syd'], ['/kontakt/', 'Kontakt'], ['/vanliga-fragor/', 'Vanliga frågor'], ['/guider/', 'Reseguider'], ...guides.slice(0, 3).map(g => [guidePath(g), g.title])])}
+      ${column('Information', [['/om-oss/', 'Om Taxi Syd'], ['/kontakt/', 'Kontakt'], ['/vanliga-fragor/', 'Vanliga frågor'], ...(publishGuides ? [['/guider/', 'Reseguider'], ...guides.slice(0, 3).map(g => [guidePath(g), g.title])] : [])])}
     </div>
     <div class="footer-bottom"><span>© ${new Date().getFullYear()} Taxi Syd · Lund och Malmö</span><span>Förhandsvisning – inga bokningar skickas</span></div>
   </div></footer>${path.startsWith('/boka-taxi/') ? '' : `<div class="mobile-cta">${site.phone ? `<a class="button button-outline" href="${telHref}">${icon('phone', 18)}Ring</a>` : ''}<a class="button button-accent" href="/boka-taxi/">Boka taxi</a></div>`}`;
@@ -285,13 +288,13 @@ function steps(cls = 'steps') {
 }
 
 function areaLinks(id, exclude = '') {
-  return `<ul class="area-links">${cities[id].areas.filter(([slug]) => slug !== exclude).map(([slug, name]) => `<li><a href="/${id}/${slug}/">${icon('pin', 16)}${name}</a></li>`).join('')}</ul>`;
+  return `<ul class="area-links">${cities[id].areas.filter(([slug]) => slug !== exclude).map(([slug, name]) => `<li><a href="${areaLink(id, slug)}">${icon('pin', 16)}${name}</a></li>`).join('')}</ul>`;
 }
 
 function cityBlocks() {
   return `<div class="city-blocks">${cityIds.map(id => `<article class="city-block"><h3><a href="${cityPath(id)}">Taxi i ${cities[id].name}</a></h3>
     <ul class="route-list">${airportIds.map(a => `<li><a href="${routePath(id, a)}"><span>${cities[id].name} – ${airports[a].name}</span><span class="route-price">${money(prices[id][a])}</span></a></li>`).join('')}</ul>
-    <p class="block-label">Vi hämtar också i</p><p class="inline-links">${cities[id].areas.map(([slug, name]) => `<a href="/${id}/${slug}/">${name}</a>`).join('<span aria-hidden="true"> · </span>')}</p>
+    <p class="block-label">Vi hämtar också i</p><p class="inline-links">${cities[id].areas.map(([slug, name]) => `<a href="${areaLink(id, slug)}">${name}</a>`).join('<span aria-hidden="true"> · </span>')}</p>
     ${textLink(cityPath(id), `Mer om taxi i ${cities[id].name}`)}</article>`).join('')}</div>`;
 }
 
@@ -319,14 +322,14 @@ function cta(title = 'Redo att boka din taxi?', text = 'Välj från och till, se
 
 const questions = [
   ['Vad kostar flygtaxi?', `${cityIds.map(c => `Från ${cities[c].name} kostar resan ${airportIds.map(a => `${money(prices[c][a])} till ${airports[a].name}`).join(' och ')}.`).join(' ')} Alla priser finns på <a href="/priser/">prissidan</a>.`],
-  ['Vilken flygplats ska jag välja?', 'Välj Kastrup om det står CPH på din biljett. Välj Malmö Airport, även kallad Sturup, om det står MMX. Läs mer i guiden <a href="/guider/malmo-airport-eller-kastrup/">Malmö Airport eller Kastrup?</a>'],
+  ['Vilken flygplats ska jag välja?', `Välj Kastrup om det står CPH på din biljett. Välj Malmö Airport, även kallad Sturup, om det står MMX.${publishGuides ? ' Läs mer i guiden <a href="/guider/malmo-airport-eller-kastrup/">Malmö Airport eller Kastrup?</a>' : ''}`],
   ['Kan jag bli hämtad utanför centrala Lund eller Malmö?', 'Ja. Välj ditt område i reseväljaren, till exempel Dalby, Södra Sandby, Hyllie eller Limhamn. Pris för områden utanför centralorten bekräftas separat.'],
   ['Behöver jag pass för att åka till Kastrup?', 'Kastrup ligger i Danmark och resan går över Öresundsbron. Ta därför med pass eller nationellt id-kort.'],
   ['Kan jag prova att boka en resa?', 'Ja. Du kan välja en resa och granska uppgifterna i förhandsvisningen. Formuläret skickar ingen bokning.'],
   ['Vad gör jag om jag behöver extra utrymme?', 'Ange antal resenärer och beskriv väskor eller särskilda behov i reseuppgifterna. Bilens kapacitet behöver bekräftas inför en riktig resa.'],
   ['Kan jag åka taxi mellan två adresser i Lund eller Malmö?', 'Ja. Välj samma ort i fälten Från och Till och ange två olika adresser, eller välj två olika orter. För lokala resor visas pris på förfrågan.'],
   ['Kan jag boka taxi från flygplatsen?', 'Ja. Välj flygplatsen i fältet Från och din ort i fältet Till. För resor från flygplatsen visas pris på förfrågan.'],
-  ['Kan vi resa med barn?', 'Ange hur många vuxna och barn som reser. Om ni behöver barnstol behöver rätt utrustning bekräftas före resan. Läs mer i guiden <a href="/guider/resa-med-barn-i-taxi/">Resa med barn i taxi</a>.'],
+  ['Kan vi resa med barn?', `Ange hur många vuxna och barn som reser. Om ni behöver barnstol behöver rätt utrustning bekräftas före resan.${publishGuides ? ' Läs mer i guiden <a href="/guider/resa-med-barn-i-taxi/">Resa med barn i taxi</a>.' : ''}`],
 ];
 
 /* ---------- Pages ---------- */
@@ -352,7 +355,7 @@ function home() {
   ${section(`${sectionHead('Så bokar du', 'Tre steg, oavsett om du ska till grannorten eller flyget.')}${steps()}`, 'section-tint')}
   ${section(`${sectionHead('Taxi i Lund, Malmö och närområdet', 'Vi kör mellan adresser i städerna och orterna runt omkring.')}${cityBlocks()}`)}
   ${section(`${sectionHead('Två flygplatser – kontrollera koden på din biljett', 'CPH är Kastrup i Danmark. MMX är Malmö Airport, som också kallas Sturup.')}${airportCards()}`)}
-  ${section(`${sectionHead('Läsning inför resan', 'Guider om mötesplatser, bagage, resor med barn och hur du väljer rätt flygplats.')}${guideCards(guides)}`, 'section-tint')}
+  ${publishGuides ? section(`${sectionHead('Läsning inför resan', 'Guider om mötesplatser, bagage, resor med barn och hur du väljer rätt flygplats.')}${guideCards(guides)}`, 'section-tint') : ''}
   ${faqSection([questions[LOCAL], questions[0], questions[1], questions[2], questions[FROM_AIRPORT]])}
   ${cta()}`;
 }
@@ -374,10 +377,10 @@ function cityPage(id) {
   ${section(usp(), 'section-usp')}
   ${mapSection(id, '', 'city-form')}
   ${section(`<div class="photo-split"><div>${sectionHead(`Så bokar du taxi i ${city.name}`, 'Tre steg, oavsett om du ska till andra sidan stan eller till flyget.')}${steps('steps steps-stacked')}</div>${figure('airport')}</div>`, 'section-tint')}
-  ${section(`${sectionHead(`Områden i och kring ${city.name}`, 'Välj ditt område för att boka taxi dit eller därifrån.')}${areaLinks(id)}`)}
-  ${section(`<div class="split"><div class="split-aside"><h2>Bra att veta i ${city.name}</h2><p>Kort om lokala resor, hämtning och flygplatser.</p></div><div class="prose"><h3>Mellan två adresser i ${city.name}</h3><p>Välj ${city.name} i både Från och Till och ange två olika adresser. För lokala resor visas pris på förfrågan. ${textLink(bookingPath(id, id), `Boka resa inom ${city.name}`)}</p><h3>Hämtning på din adress</h3><p>Ange gatuadress och husnummer när du bokar. Lägg gärna till port, hotellentré eller en tydlig mötesplats om det gör det enklare att hitta dig.</p><h3>Från ${city.name} Centralstation</h3><p>${stationGuide.intro} ${textLink(guidePath(stationGuide), stationGuide.title)}</p><h3>Till ${cities[other].name}</h3><p>Du kan också åka mellan städerna. Välj ${city.name} i Från och ${cities[other].name} i Till. ${textLink(bookingPath(id, other), `Boka ${city.name} – ${cities[other].name}`)}</p></div></div>`, 'section-tint')}
+  ${section(`${sectionHead(`Områden i och kring ${city.name}`, 'Välj område för hämtning. Du kan ändra både från och till när du bokar.')}${areaLinks(id)}`)}
+  ${section(`<div class="split"><div class="split-aside"><h2>Bra att veta i ${city.name}</h2><p>Kort om lokala resor, hämtning och flygplatser.</p></div><div class="prose"><h3>Mellan två adresser i ${city.name}</h3><p>Välj ${city.name} i både Från och Till och ange två olika adresser. För lokala resor visas pris på förfrågan. ${textLink(bookingPath(id, id), `Boka resa inom ${city.name}`)}</p><h3>Hämtning på din adress</h3><p>Ange gatuadress och husnummer när du bokar. Lägg gärna till port, hotellentré eller en tydlig mötesplats om det gör det enklare att hitta dig.</p><h3>Från ${city.name} Centralstation</h3><p>${stationGuide.intro}${publishGuides ? ' ' + textLink(guidePath(stationGuide), stationGuide.title) : ''}</p><h3>Till ${cities[other].name}</h3><p>Du kan också åka mellan städerna. Välj ${city.name} i Från och ${cities[other].name} i Till. ${textLink(bookingPath(id, other), `Boka ${city.name} – ${cities[other].name}`)}</p></div></div>`, 'section-tint')}
   ${section(`${sectionHead('Två flygplatser – kontrollera koden på din biljett', 'CPH är Kastrup i Danmark. MMX är Malmö Airport, som också kallas Sturup.')}${airportCards()}`)}
-  ${section(`${sectionHead('Reseguider inför avresan')}${guideCards([stationGuide, guides[0], guides[1]])}<p class="section-more">${textLink('/guider/', 'Alla reseguider')}</p>`, 'section-tint')}
+  ${publishGuides ? section(`${sectionHead('Reseguider inför avresan')}${guideCards([stationGuide, guides[0], guides[1]])}<p class="section-more">${textLink('/guider/', 'Alla reseguider')}</p>`, 'section-tint') : ''}
   ${faqSection([questions[LOCAL], [`Vad kostar taxi från ${city.name} till Kastrup?`, `Det fasta priset från ${city.name} till Kastrup (CPH) är ${money(prices[id].kastrup)} per enkelresa.`], [`Vad kostar taxi från ${city.name} till Malmö Airport?`, `Det fasta priset från ${city.name} till Malmö Airport (MMX) är ${money(prices[id].sturup)} per enkelresa.`], questions[2], questions[FROM_AIRPORT]], `Frågor om taxi i ${city.name}`)}
   ${cta(`Åker du i ${cities[other].name} i stället?`, `Se priser, områden och bokning för ${cities[other].name}.`, cityPath(other), `Taxi i ${cities[other].name}`)}`;
 }
@@ -415,7 +418,7 @@ function airportPage(id) {
   return `${pageHead({ crumbs: [['Flygtaxi', '/flygtaxi/'], [airport.name]], title: `Taxi till ${airport.name} (${airport.code})`, lead: `${airport.text} Välj var du åker från för att se priset.`, aside: quoteWidget('', id, 'airport', `Boka taxi till ${airport.name}`) })}
   ${section(`${sectionHead(`Fasta priser till ${airport.name}`, 'Pris per bil och enkelresa.')}${fareTable(cityIds.map(c => [c, id]), `Fasta priser till ${airport.name}`)}<p class="section-more">Ska du åka från flygplatsen? ${textLink(bookingPath(id, ''), `Boka taxi från ${airport.name}`)}</p>`)}
   ${section(`<div class="split"><div class="split-aside"><h2>Om ${airport.name}</h2><p>Kontrollera alltid flygplatskoden på din biljett före bokningen.</p></div><dl class="facts facts-wide"><div><dt>Namn</dt><dd>${airport.full}</dd></div><div><dt>Flygplatskod</dt><dd>${airport.code}</dd></div><div><dt>Land</dt><dd>${airport.country}</dd></div>${cityIds.map(c => `<div><dt>Från ${cities[c].name}</dt><dd><a href="${routePath(c, id)}">${money(prices[c][id])}</a></dd></div>`).join('')}</dl></div>`, 'section-tint')}
-  ${section(`${sectionHead('Läs mer inför resan')}${guideCards([guides[0], guides[1], guides[5]])}`)}
+  ${publishGuides ? section(`${sectionHead('Läs mer inför resan')}${guideCards([guides[0], guides[1], guides[5]])}`) : ''}
   ${faqSection([questions[1], ...(id === 'kastrup' ? [questions[3]] : []), questions[FROM_AIRPORT], questions[2]], `Frågor om taxi till ${airport.name}`)}
   ${cta()}`;
 }
@@ -478,7 +481,7 @@ add('/om-oss/', 'Om Taxi Syd', 'Taxi Syd kör taxi i Lund och Malmö och flygtax
   ${section(`${sectionHead('Flygplatser')}${airportCards()}`, 'section-tint')}
   ${cta()}`);
 add('/kontakt/', 'Kontakt', 'Kontakt och reseinformation för Taxi Syd.', () => `${pageHead({ crumbs: [['Kontakt']], title: 'Kontakta Taxi Syd', lead: site.phone || site.email ? 'Hör av dig om du har frågor om din resa.' : 'Kontaktuppgifter läggs till när Taxi Syd är redo att ta emot förfrågningar.' })}
-  ${section(`<div class="contact-cards">${site.phone ? `<div class="card"><h2>Ring oss</h2><p>Prata med oss om din resa.</p><a class="text-link" href="${telHref}">${icon('phone', 16)}${esc(site.phone)}</a></div>` : ''}${site.email ? `<div class="card"><h2>Mejla oss</h2><p>Vi svarar så snart vi kan.</p><a class="text-link" href="mailto:${esc(site.email)}">${esc(site.email)}</a></div>` : ''}<div class="card"><h2>Planera en resa</h2><p>Välj från och till, se priset och granska en resesammanfattning.</p>${textLink('/boka-taxi/', 'Öppna bokningen')}</div><div class="card"><h2>Har du en fråga?</h2><p>Läs om flygplatser, priser och hämtning.</p>${textLink('/vanliga-fragor/', 'Vanliga frågor')}</div><div class="card"><h2>Inför avresan</h2><p>Praktiska råd om mötesplatser och bagage.</p>${textLink('/guider/', 'Reseguider')}</div></div>`)}`);
+  ${section(`<div class="contact-cards">${site.phone ? `<div class="card"><h2>Ring oss</h2><p>Prata med oss om din resa.</p><a class="text-link" href="${telHref}">${icon('phone', 16)}${esc(site.phone)}</a></div>` : ''}${site.email ? `<div class="card"><h2>Mejla oss</h2><p>Vi svarar så snart vi kan.</p><a class="text-link" href="mailto:${esc(site.email)}">${esc(site.email)}</a></div>` : ''}<div class="card"><h2>Planera en resa</h2><p>Välj från och till, se priset och granska en resesammanfattning.</p>${textLink('/boka-taxi/', 'Öppna bokningen')}</div><div class="card"><h2>Har du en fråga?</h2><p>Läs om flygplatser, priser och hämtning.</p>${textLink('/vanliga-fragor/', 'Vanliga frågor')}</div>${publishGuides ? `<div class="card"><h2>Inför avresan</h2><p>Praktiska råd om mötesplatser och bagage.</p>${textLink('/guider/', 'Reseguider')}</div>` : ''}</div>`)}`);
 add('/vanliga-fragor/', 'Vanliga frågor', 'Svar på frågor om taxi, flygtaxi, priser och hämtning i Lund och Malmö.', () => `${pageHead({ crumbs: [['Vanliga frågor']], title: 'Vanliga frågor', lead: 'Svar om priser, lokala resor, flygplatser, hämtning och bokning.' })}
   ${section(`<div class="narrow">${faq(questions)}</div>`)}
   ${cta()}`);
@@ -488,14 +491,14 @@ add('/flygtaxi/', 'Flygtaxi till Kastrup och Malmö Airport', 'Flygtaxi från Lu
   ${section(`${sectionHead('Alla sträckor och priser')}${fareTable(allRoutes)}`, 'section-tint')}
   ${section(`${sectionHead('Så bokar du')}${steps()}`)}
   ${faqSection([questions[1], questions[3], questions[0], questions[FROM_AIRPORT]], 'Frågor om flygtaxi')}`);
-add('/guider/', 'Reseguider', 'Praktiska råd inför taxiresan till flygplatsen.', () => `${pageHead({ crumbs: [['Reseguider']], title: 'Reseguider', lead: 'Praktiska tips om mötesplatser, bagage och att välja rätt flygplats.' })}
+if (publishGuides) add('/guider/', 'Reseguider', 'Praktiska råd inför taxiresan till flygplatsen.', () => `${pageHead({ crumbs: [['Reseguider']], title: 'Reseguider', lead: 'Praktiska tips om mötesplatser, bagage och att välja rätt flygplats.' })}
   ${section(guideCards(guides))}
   ${cta()}`);
 
 for (const id of cityIds) {
   const city = cities[id];
   add(cityPath(id), `Taxi i ${city.name} – lokalt och till flygplatsen`, `Taxi i ${city.name}: lokala resor mellan adresser och flygtaxi till Kastrup ${money(prices[id].kastrup)} och Malmö Airport ${money(prices[id].sturup)}.`, () => cityPage(id));
-  for (const [slug, name] of city.areas) {
+  for (const [slug, name] of publishAreaPages ? city.areas : []) {
     add(`/${id}/${slug}/`, `Taxi i ${name} – till och från ${name}`, `Boka taxi till eller från ${name}, ${city.name}. Lokala resor och flygtaxi till Kastrup (CPH) och Malmö Airport (MMX).`, () => areaPage(origins.get(slug)));
   }
   for (const airport of airportIds) {
@@ -507,7 +510,7 @@ for (const id of airportIds) {
   add(airportPath(id), `Taxi till ${airports[id].name} (${airports[id].code})`, `Flygtaxi till ${airports[id].name} från Malmö ${money(prices.malmo[id])} och Lund ${money(prices.lund[id])}. Fast pris.`, () => airportPage(id));
 }
 
-for (const guide of guides) add(guidePath(guide), guide.title, guide.intro, () => guidePage(guide));
+for (const guide of publishGuides ? guides : []) add(guidePath(guide), guide.title, guide.intro, () => guidePage(guide));
 
 export { paths };
 
